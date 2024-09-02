@@ -10,7 +10,6 @@ Clone and build the repository:
 git clone https://github.com/yourusername/ResponseWrapper.git
 
 ```shell
-
 Build and pack:
 cd ResponseWrapper
 dotnet build
@@ -38,56 +37,70 @@ Alternatively, if you're using the command line or prefer editing the .csproj fi
 Setup
 In your Program.cs file, configure your application to use ResponseWrapper:
 ```csharp
-
 using ResponseWrapper;
 
 var builder = WebApplication.CreateBuilder(args);
+// your configs here ..
+builder.Services.AddControllers(options => options.Filters.Add<GlobalExceptionFilter>())
+    .ConfigureApiBehaviorOptions(ApiBehaviorConfigurator.ConfigureInvalidModelStateResponse)
+    .AddJsonOptions(JsonOptionsConfigurator.ConfigureJsonOptions);
+// make sure that configured AddControllers is before AddEndpointsApiExplorer
+builder.Services.AddEndpointsApiExplorer();
 
-builder.Services.AddControllers(options =>
-    {
-        options.Filters.Add<GlobalExceptionFilter>();
-    })
-    .ConfigureApiBehaviorOptions(options =>
-    {
-        options.SuppressModelStateInvalidFilter = true;
-    }).AddJsonOptions(options =>
-{
-    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-});
+//other configs here .
+var app = builder.Build();
 ```
 
 Usage
 Returning Responses
 Use the extension methods provided by ResponseWrapper in your controllers:
 ```csharp
+using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc;
+using ResponseWrapper;
+
+namespace test;
+
+[ApiController]
+[Route("[controller]")]
 public class ExampleController : ControllerBase
 {
-[HttpGet]
-public IActionResult Get()
-{
-var data = new { Message = "Hello, World!" };
-return this.Success(data);
-}
-
-    [HttpPost]
-    public IActionResult Post([FromBody] SomeModel model)
+    [HttpGet]
+    public IActionResult Get()
     {
-        if (!ModelState.IsValid)
-        {
-            return this.ValidationError(ModelState.ToDictionary());
-        }
-
-        // Process the model...
-
-        return this.Success(new { Id = 1 });
+        var data = new { Message = "Hello, World!" };
+        return this.Success(data);
     }
 
-    [HttpGet("error")]
-    public IActionResult GetError()
+    [HttpGet("businessError")]
+    public IActionResult GetBusinessError()
     {
-        return this.BusinessError("ERR001", "An error occurred");
+        return this.BusinessError("B001", "An error occurred");
+    }
+    
+    [HttpGet("serverError")]
+    public IActionResult GetServerError()
+    {
+        throw new Exception();
+    }
+    [HttpPost("validationError")]
+    public IActionResult GetValidationError([FromBody] UserDto userDto)
+    {
+        return this.Success(userDto.Name);
+    }
+    
+    [HttpPost("authError")]
+    public IActionResult GetAuthError()
+    {
+        return this.AuthorizationError("A001","wrong api key");
+    }
+    public class UserDto
+    {
+        [Length(50,51)]
+        public string? Name { get; set; }
+
+        [EmailAddress]
+        public string Email { get; set; }
     }
 }
 ```
@@ -95,10 +108,62 @@ return this.Success(data);
 The standard response structure is:
 ```
 {
-"status": "Success" | "Error",
+"status": "success" | "validation_error" | "invalid_request" | "authorization_error" | "server_error"
 "traceId": "unique-trace-id",
 "data": { ... },  // Only for successful responses
-"errors": { ... }  // Only for error responses
+"errors": { ... }  // Only for failure responses
+}
+```
+
+Example of Validation Error Response
+```json
+
+{
+  "status": "validation_error",
+  "traceId": "0HN6BAV9MLRNU:00000004",
+  "errors": {
+    "Name": [
+      "The field Name must be a string or collection type with a minimum length of '50' and maximum length of '51'."
+    ]
+  }
+}
+```
+Business Error Response
+```json
+
+{
+  "status": "invalid_request",
+  "traceId": "0HN6BATGGO9G2:00000004",
+  "errors": {
+    "B001": [
+      "An error occurred"
+    ]
+  }
+}
+```
+
+Authorization Error Response
+```json
+{
+  "status": "authorization_error",
+  "traceId": "0HN6BB31TKENI:00000003",
+  "errors": {
+    "A001": [
+      "wrong api key"
+    ]
+  }
+}
+```
+Server Error Response
+```json
+{
+  "status": "server_error",
+  "traceId": "0HN6BAV9MLRNU:00000003",
+  "errors": {
+    "S001": [
+      "unhandled exception"
+    ]
+  }
 }
 ```
 ### Available Methods
@@ -127,47 +192,7 @@ The ResponseWrapper is designed to automatically handle model validations and ex
 
 ### Validation Annotations
 
+* Required: use [ApiController] and [Route("[controller]")] before controller class definition
+in order to let checking the validation error goes implicitly
+
 When you use validation annotations on your model properties, such as `[Required]`, `[StringLength]`, `[Range]`, etc., the ResponseWrapper will automatically catch these validation errors and return them in a structured format.
-
-Example of a model with validation annotations:
-```csharp
-public class UserDto
-{
-    [Required]
-    public string Name { get; set; }
-
-    [EmailAddress]
-    public string Email { get; set; }
-}
-```
-
-Example of Validation Error Response
-```json
-
-{
-"success": false,
-"message": "Validation failed",
-"errors": {
-"name": ["The Name field is required."],
-"email": ["The Email field is not a valid e-mail address."]
-}
-}
-```
-Business Error Response
-```json
-
-{
-"success": false,
-"message": "User not found",
-"errorCode": "USER_NOT_FOUND"
-}
-```
-
-Server Error Response
-```json
-{
-"success": false,
-"message": "An unexpected error occurred",
-"errorCode": "INTERNAL_SERVER_ERROR"
-}
-```

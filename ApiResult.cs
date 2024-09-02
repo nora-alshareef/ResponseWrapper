@@ -15,7 +15,7 @@ namespace ResponseWrapper
         {
             return new ApiResult<T>
             {
-                Status = "Success",
+                Status = "success",
                 TraceId = traceId,
                 Data = data
             };
@@ -26,7 +26,7 @@ namespace ResponseWrapper
             string convertedCode = ConvertToString(code);
             return new ApiResult<T>
             {
-                Status = "Error",
+                Status = "invalid_request",
                 TraceId = traceId,
                 Errors = new Dictionary<string, string[]> { { convertedCode, new[] { message } } }
             };
@@ -36,7 +36,7 @@ namespace ResponseWrapper
         {
             return new ApiResult<T>
             {
-                Status = "Error",
+                Status = "validation_error",
                 TraceId = traceId,
                 Errors = errors
             };
@@ -47,18 +47,20 @@ namespace ResponseWrapper
             string convertedCode = ConvertToString(code);
             return new ApiResult<T>
             {
-                Status = "Error",
+                Status = "authorization_error",
                 TraceId = traceId,
                 Errors = new Dictionary<string, string[]> { { convertedCode, new[] { message } } }
             };
         }
+        
+        
     
         public static ApiResult<T> ServerError<TCode>(TCode code, string message, string traceId)
         {
             string convertedCode = ConvertToString(code);
             return new ApiResult<T>
             {
-                Status = "Error",
+                Status = "server_error",
                 TraceId = traceId,
                 Errors = new Dictionary<string, string[]> { { convertedCode, new[] { message } } }
             };

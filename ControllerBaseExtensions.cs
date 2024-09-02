@@ -11,6 +11,13 @@ public static class ControllerBaseExtensions
             StatusCode = statusCode
         };
     }
+    public static IActionResult ApiResponse<T>(ApiResult<T> result, int statusCode)
+    {
+        return new ObjectResult(result)
+        {
+            StatusCode = statusCode
+        };
+    }
 
     public static IActionResult Success<T>(this ControllerBase controller, T data)
     {
