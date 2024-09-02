@@ -10,7 +10,7 @@ public class GlobalExceptionFilter(ILogger<GlobalExceptionFilter> logger) : IExc
     {
         logger.LogError(context.Exception, "An unhandled exception has occurred.");
 
-        var result = ApiResult<object>.ServerError("S001", "unhandled exception", context.HttpContext.TraceIdentifier);
+        var result = ApiResult.ServerError("S001", "unhandled exception", context.HttpContext.TraceIdentifier);
 
         context.Result = new ObjectResult(result)
         {

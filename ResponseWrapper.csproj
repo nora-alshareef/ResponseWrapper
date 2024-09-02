@@ -6,10 +6,15 @@
         <Nullable>enable</Nullable>
         <RootNamespace>ResponseWrapper</RootNamespace>
         <Version>1.0.0</Version>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0"/>
+        <None Update="README.md">
+            <Pack>true</Pack>
+            <PackagePath> </PackagePath>
+        </None>
     </ItemGroup>
 
 </Project>

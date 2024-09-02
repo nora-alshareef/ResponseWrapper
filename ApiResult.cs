@@ -1,18 +1,20 @@
 ﻿using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Http;
+
 namespace ResponseWrapper
 {
-    public class ApiResult<T>
+    public class ApiResult
     {
         public required string Status { get; set; }
         public required string TraceId { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public T? Data { get; set; }
+        public object? Data { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public Dictionary<string, string[]>? Errors { get; set; }
 
-        public static ApiResult<T> Success(T data, string traceId)
+        public static ApiResult Success<T>(T data, string traceId)
         {
-            return new ApiResult<T>
+            return new ApiResult
             {
                 Status = "success",
                 TraceId = traceId,
@@ -20,10 +22,10 @@ namespace ResponseWrapper
             };
         }
 
-        public static ApiResult<T> BusinessError<TCode>(TCode code, string message, string traceId)
+        public static ApiResult BusinessError<TCode>(TCode code, string message, string traceId)
         {
             var convertedCode = ConvertToString(code);
-            return new ApiResult<T>
+            return new ApiResult
             {
                 Status = "invalid_request",
                 TraceId = traceId,
@@ -31,9 +33,9 @@ namespace ResponseWrapper
             };
         }
 
-        public static ApiResult<T> ValidationError(Dictionary<string, string[]> errors, string traceId)
+        public static ApiResult ValidationError(Dictionary<string, string[]> errors, string traceId)
         {
-            return new ApiResult<T>
+            return new ApiResult
             {
                 Status = "validation_error",
                 TraceId = traceId,
@@ -41,10 +43,10 @@ namespace ResponseWrapper
             };
         }
     
-        public static ApiResult<T> AuthorizationError<TCode>(TCode code, string message, string traceId)
+        public static ApiResult AuthorizationError<TCode>(TCode code, string message, string traceId)
         {
             string? convertedCode = ConvertToString(code);
-            return new ApiResult<T>
+            return new ApiResult
             {
                 Status = "authorization_error",
                 TraceId = traceId,
@@ -54,16 +56,17 @@ namespace ResponseWrapper
         
         
     
-        public static ApiResult<T> ServerError<TCode>(TCode code, string message, string traceId)
+        public static ApiResult ServerError<TCode>(TCode code, string message, string traceId)
         {
             var convertedCode = ConvertToString(code);
-            return new ApiResult<T>
+            return new ApiResult
             {
                 Status = "server_error",
                 TraceId = traceId,
                 Errors = new Dictionary<string, string[]> { {  convertedCode??string.Empty, new[] { message } } }
             };
         }
+        
 
         private static string? ConvertToString<TCode>(TCode code)
         {
@@ -80,6 +83,9 @@ namespace ResponseWrapper
                 throw new ArgumentException($"Unsupported type for error code: {typeof(TCode).Name}", nameof(code));
             }
         }
+        
+        // New method to get the HTTP status code based on ApiResult status
+        
     }
     
 }

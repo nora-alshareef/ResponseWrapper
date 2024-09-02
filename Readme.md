@@ -104,6 +104,33 @@ public class ExampleController : ControllerBase
     }
 }
 ```
+*Recommended: 
+Another effective approach is to have your business logic return an ApiResult, allowing the controller to directly return this.ApiResponse(result).
+
+```csharp
+    
+[ApiController]
+[Route("api/[controller]")]
+public class ExampleController(BL bl) : ControllerBase
+{
+    [HttpPost]
+    public async Task<IActionResult> Method([FromBody] RequestModel requestModel)
+    {
+        var traceId = ControllerContext.HttpContext.TraceIdentifier;
+        var apiResult=await bl.Method(requestModel.Property,traceId);
+        return this.ApiResponse(apiResult);
+    }
+}
+
+// BL Method:
+
+    public async Task<ApiResult> Method(string property,string traceId)
+    {
+       return ApiResult.BusinessError("code","message", traceId);
+    }
+
+
+```
 ## Response Structure
 The standard response structure is:
 ```
