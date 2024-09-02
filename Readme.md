@@ -192,7 +192,10 @@ The ResponseWrapper is designed to automatically handle model validations and ex
 
 ### Validation Annotations
 
-* Required: use [ApiController] and [Route("[controller]")] before controller class definition
-in order to let checking the validation error goes implicitly
-
-When you use validation annotations on your model properties, such as `[Required]`, `[StringLength]`, `[Range]`, etc., the ResponseWrapper will automatically catch these validation errors and return them in a structured format.
+To enable automatic validation error checking, ensure you use the [ApiController] and [Route("[controller]")] attributes before your controller class definition.
+When you apply validation annotations to your model properties—such as [Required], [StringLength], or [Range]—the ResponseWrapper will automatically capture any validation errors and return them in a structured format.
+```csharp
+[ApiController]
+[Route("[controller]")]
+public class ExampleController : ControllerBase { ..}
+```
