@@ -1,17 +1,6 @@
-# Build results
-[Dd]ebug/
-[Rr]elease/
-x64/
-[Bb]in/
-[Oo]bj/
-
-# NuGet packages
-packages/
-
-# Others
-*.log
-*.tmp
-*.temp
-.idea/
-obj/
 bin/
+obj/
+.vs/
+*.user
+*.nupkg
+.idea/

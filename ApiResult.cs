@@ -3,13 +3,12 @@ namespace ResponseWrapper
 {
     public class ApiResult<T>
     {
-        
-        public string Status { get; set; }
-        public string TraceId { get; set; }
+        public required string Status { get; set; }
+        public required string TraceId { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public T? Data { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public Dictionary<string, string[]> Errors { get; set; }
+        public Dictionary<string, string[]>? Errors { get; set; }
 
         public static ApiResult<T> Success(T data, string traceId)
         {
@@ -23,12 +22,12 @@ namespace ResponseWrapper
 
         public static ApiResult<T> BusinessError<TCode>(TCode code, string message, string traceId)
         {
-            string convertedCode = ConvertToString(code);
+            var convertedCode = ConvertToString(code);
             return new ApiResult<T>
             {
                 Status = "invalid_request",
                 TraceId = traceId,
-                Errors = new Dictionary<string, string[]> { { convertedCode, new[] { message } } }
+                Errors = new Dictionary<string, string[]> { { convertedCode??string.Empty, new[] { message } } }
             };
         }
 
@@ -44,12 +43,12 @@ namespace ResponseWrapper
     
         public static ApiResult<T> AuthorizationError<TCode>(TCode code, string message, string traceId)
         {
-            string convertedCode = ConvertToString(code);
+            string? convertedCode = ConvertToString(code);
             return new ApiResult<T>
             {
                 Status = "authorization_error",
                 TraceId = traceId,
-                Errors = new Dictionary<string, string[]> { { convertedCode, new[] { message } } }
+                Errors = new Dictionary<string, string[]> { {  convertedCode??string.Empty, new[] { message } } }
             };
         }
         
@@ -57,16 +56,16 @@ namespace ResponseWrapper
     
         public static ApiResult<T> ServerError<TCode>(TCode code, string message, string traceId)
         {
-            string convertedCode = ConvertToString(code);
+            var convertedCode = ConvertToString(code);
             return new ApiResult<T>
             {
                 Status = "server_error",
                 TraceId = traceId,
-                Errors = new Dictionary<string, string[]> { { convertedCode, new[] { message } } }
+                Errors = new Dictionary<string, string[]> { {  convertedCode??string.Empty, new[] { message } } }
             };
         }
 
-        private static string ConvertToString<TCode>(TCode code)
+        private static string? ConvertToString<TCode>(TCode code)
         {
             if (code is Enum)
             {
