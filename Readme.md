@@ -107,6 +107,7 @@ public class ExampleController : ControllerBase
 *Recommended: 
 Another effective approach is to have your business logic return an ApiResult, allowing the controller to directly return this.ApiResponse(result).
 
+Controller class
 ```csharp
     
 [ApiController]
@@ -121,15 +122,14 @@ public class ExampleController(BL bl) : ControllerBase
         return this.ApiResponse(apiResult);
     }
 }
-
-// BL Method:
-
+```
+BL Class
+```csharp
+//BL Method 
     public async Task<ApiResult> Method(string property,string traceId)
     {
        return ApiResult.BusinessError("code","message", traceId);
     }
-
-
 ```
 ## Response Structure
 The standard response structure is:
