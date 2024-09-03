@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -23,7 +24,7 @@ public static class ControllerBaseExtensions
     {
         return new ObjectResult(result)
         {
-            StatusCode = GetStatusCode(result)
+            StatusCode = ExtensionsUtil.GetStatusCode(result.Status)
         };
     }
 
@@ -51,16 +52,32 @@ public static class ControllerBaseExtensions
     {
         return controller.ApiResponse(ApiResult.ServerError(code, message, controller.HttpContext.TraceIdentifier), 500);
     }
-    private static int GetStatusCode(ApiResult result)
+}
+
+
+public static class MiddlewareResponseExtensions
+{
+    public static async Task WriteApiResultAsync(this HttpContext context, ApiResult apiResult)
     {
-        return result.Status switch
+        context.Response.ContentType = "application/json";
+        context.Response.StatusCode = ExtensionsUtil.GetStatusCode(apiResult.Status);
+
+        await context.Response.WriteAsync(JsonSerializer.Serialize(apiResult));
+    }
+}
+
+internal static class ExtensionsUtil
+{
+    internal static int GetStatusCode(string status)
+    {
+        return status switch
         {
             "success" => StatusCodes.Status200OK,
             "invalid_request" => StatusCodes.Status400BadRequest,
-            "authorization_error" => StatusCodes.Status401Unauthorized,
+            "authorization_error" => StatusCodes.Status403Forbidden,
             "validation_error" => StatusCodes.Status400BadRequest,
             "server_error" => StatusCodes.Status500InternalServerError,
-            _ => StatusCodes.Status500InternalServerError // Default case for unknown status
+            _ => StatusCodes.Status500InternalServerError,
         };
     }
 }

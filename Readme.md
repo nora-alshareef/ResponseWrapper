@@ -51,9 +51,12 @@ builder.Services.AddEndpointsApiExplorer();
 var app = builder.Build();
 ```
 
-Usage
-Returning Responses
-Use the extension methods provided by ResponseWrapper in your controllers:
+## Usage
+### Returning Responses
+You can utilize the extension methods provided by ResponseWrapper in three different contexts: controllers, business logic, and middleware.
+
+#### 1. In Controllers
+You can directly use the response methods in your controller actions:
 ```csharp
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
@@ -104,10 +107,10 @@ public class ExampleController : ControllerBase
     }
 }
 ```
-*Recommended: 
-Another effective approach is to have your business logic return an ApiResult, allowing the controller to directly return this.ApiResponse(result).
+#### 2. In Business Logic
+A recommended approach is to have your business logic return an ApiResult, allowing the controller to return this result directly. This way, you avoid throwing exceptions from the business logic, simplifying error handling.
 
-Controller class
+* Controller class
 ```csharp
     
 [ApiController]
@@ -123,7 +126,7 @@ public class ExampleController(BL bl) : ControllerBase
     }
 }
 ```
-BL Class
+* BL Class
 ```csharp
 //BL Method 
     public async Task<ApiResult> Method(string property,string traceId)
@@ -131,6 +134,30 @@ BL Class
        return ApiResult.BusinessError("code","message", traceId);
     }
 ```
+
+#### 3. In Middleware
+Sometimes, you need to return a response before the request reaches the controller, such as when authorization fails. In this case, use MiddlewareResponseExtensions to handle the response:
+```csharp
+if (authHeader.Count == 0)
+                 {
+                     var result= ApiResult.AuthorizationError(
+                         "A001","secret is missing ",context.TraceIdentifier);
+                     await context.WriteApiResultAsync(result);
+                     return; // Return to prevent further processing
+                 }
+
+                 var isAuthorized = authHeader.ToString()
+                     .Contains(configs.CurrentValue.MainConfigurations.ApiKey);
+                 
+                 if (!isAuthorized)
+                 {
+                     var result= ApiResult.AuthorizationError(
+                          "A002","secret is wrong",context.TraceIdentifier);
+                     await context.WriteApiResultAsync(result);
+                     return; // Return to prevent further processing
+                 }
+```
+
 ## Response Structure
 The standard response structure is:
 ```
