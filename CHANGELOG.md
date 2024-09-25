@@ -1,6 +1,23 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+### Added 
+You have 2 options regarding ConfigureInvalidModelStateResponse : 
+1- including Func<ActionContext, Dictionary<string, string[]>> as more validation input to be taken from other Annotations/validation libraries
+So if you want to keep your current validation or add extra , you can do that like here:
+.ConfigureApiBehaviorOptions(options =>
+ApiBehaviorConfigurator.ConfigureInvalidModelStateResponse(
+options,
+CustomErrorFactory.InvalidModelStateResponseFactoryWithCodes
+)
+
+or keep the default one like here :
+.ConfigureApiBehaviorOptions(options =>
+ApiBehaviorConfigurator.ConfigureInvalidModelStateResponse()
+
+2- (internal to idart) .. always do the first one with usie of Annotations Utils.. the thing is : CustomErrorFactory.InvalidModelStateResponseFactoryWithCodes
+will handle all the types of annotations even the dotnet ones or external custom attributes.
+
 
 ## [1.0.0] - 2024-09-02
 

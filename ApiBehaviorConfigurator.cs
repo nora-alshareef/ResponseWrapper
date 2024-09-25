@@ -4,18 +4,32 @@ namespace ResponseWrapper;
 
 public static class ApiBehaviorConfigurator
 {
-    public static void ConfigureInvalidModelStateResponse(ApiBehaviorOptions options)
-    {
-        options.InvalidModelStateResponseFactory = context =>
+        public static void ConfigureInvalidModelStateResponse(ApiBehaviorOptions options)
         {
-            var errors = new Dictionary<string, string[]>();
-            foreach (var e1 in context.ModelState)
+            options.InvalidModelStateResponseFactory = context =>
             {
-                if (e1.Value is { Errors.Count: > 0 }) errors.Add(e1.Key, e1.Value.Errors.Select(e => e.ErrorMessage).ToArray());
-            }
+                var errors = new Dictionary<string, string[]>();
+                foreach (var e1 in context.ModelState)
+                {
+                    if (e1.Value is { Errors.Count: > 0 })
+                        errors.Add(e1.Key, e1.Value.Errors.Select(e => e.ErrorMessage).ToArray());
+                }
 
-            var result = ApiResult.ValidationError(errors, context.HttpContext.TraceIdentifier);
-            return ControllerBaseExtensions.ApiResponse(result, 400);
-        };
+                var result = ApiResult.CreateValidationError(errors, context.HttpContext.TraceIdentifier);
+                return ControllerExtensions.ApiResponse(result, 400);
+            };
+        }
+        
+        public static void ConfigureInvalidModelStateResponse(
+            ApiBehaviorOptions options,
+            Func<ActionContext, Dictionary<string, string[]>> customErrorFactory)
+        {
+            options.InvalidModelStateResponseFactory = context =>
+            {
+                var errors = customErrorFactory(context);
+                
+                var result = ApiResult.CreateValidationError(errors, context.HttpContext.TraceIdentifier);
+                return ControllerExtensions.ApiResponse(result, 400);
+            };
+        }
     }
-}
